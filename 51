@@ -1,0 +1,35 @@
+import os
+
+# Define the parent directory where your 'daily-x' folders are located
+parent_directory = "/path/to/parent/directory"  # Update this path accordingly
+
+# Define the old and new date values
+old_date = "2024-03-01"
+new_date = "2025-03-04"
+
+# Iterate over each 'daily-x' folder
+for folder in os.listdir(parent_directory):
+    folder_path = os.path.join(parent_directory, folder)
+    
+    # Ensure it's a directory and matches the 'daily-x' pattern
+    if os.path.isdir(folder_path) and folder.startswith("daily-"):
+        # Iterate over each file in the folder
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            
+            # Process only YAML files
+            if filename.endswith(".yaml") or filename.endswith(".yml"):
+                # Read the file content
+                with open(file_path, "r", encoding="utf-8") as file:
+                    content = file.read()
+                
+                # Replace the date
+                updated_content = content.replace(old_date, new_date)
+                
+                # Write back the updated content
+                with open(file_path, "w", encoding="utf-8") as file:
+                    file.write(updated_content)
+                
+                print(f"Updated {file_path}")
+
+print("Date replacement completed successfully!")
