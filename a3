@@ -1,0 +1,21 @@
+Based on the provided params dictionary in your Python code, the "source-file" key is set to a specific file name ("alphanumeric_luhn_valid"), while "file-prefix" is set to "alphanumeric".
+
+If the program is requiring a source file and you specify "source-file", it is likely treating it as an exact match rather than a prefix-based search. That means the program will look for a file named exactly "alphanumeric_luhn_valid" and will not search for all files matching the "file-prefix".
+
+If you intend to process all files that start with "alphanumeric", then the program needs to be modified to either:
+
+Use file-prefix instead of source-file when searching for files.
+Modify the logic to search for all files matching the prefix when source-file is provided but no exact match is found.
+So, your understanding is correct: the current setup is likely causing it to search for an exact file rather than all matching files by prefix. You may need to check the logic where file selection happens and see if it prioritizes "source-file" over "file-prefix" in a way that prevents finding all matching files.
+
+
+Got it! Since the current implementation is based on the "source-file", it's treating it as an exact file match rather than searching for multiple files using "file-prefix".
+
+Possible Fixes:
+Modify the logic to use "file-prefix" when "source-file" is not provided
+
+If "source-file" is None or empty, search for all files matching "file-prefix".
+If "source-file" is provided, search for that exact file.
+Allow both "source-file" and "file-prefix" to work together
+
+If "source-file" is provided but not found, fall back to searching for files with "file-prefix".
