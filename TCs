@@ -1,0 +1,5 @@
+Given source-file	Given file-prefix	Given file-suffix	Files in Directory	Found Files
+"alphanumeric_luhn_valid"	None	None	alphanumeric_luhn_valid.txt, alphanumeric_test.txt	["alphanumeric_luhn_valid.txt"]
+None	"alphanumeric"	".txt"	alphanumeric_luhn_valid.txt, alphanumeric_test.log, alphanumeric_test.txt	["alphanumeric_luhn_valid.txt", "alphanumeric_test.txt"]
+None	"test"	".csv"	test1.csv, test2.txt, test3.csv	["test1.csv", "test3.csv"]
+None	None	".json"	config.json, settings.json, data.csv	["config.json", "settings.json"]
