@@ -1,0 +1,3 @@
+extra_records = df2.merge(df1, on=df1.columns.tolist(), how='left', indicator=True).query('_merge == "left_only"').drop(columns=['_merge'])
+
+print(extra_records)
