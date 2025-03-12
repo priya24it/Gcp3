@@ -1,0 +1,43 @@
+import pyodbc
+import pandas as pd
+from google.cloud import bigquery
+
+# SQL Server Connection - Windows Authentication
+server = 'YOUR_SERVER_NAME'
+database = 'YOUR_DATABASE_NAME'
+conn = pyodbc.connect(
+    'DRIVER={SQL Server};'
+    f'SERVER={server};'
+    f'DATABASE={database};'
+    'Trusted_Connection=yes;'
+)
+
+# Fetch data from SQL Server
+query_sql = "SELECT * FROM recordtypes"
+df_sql = pd.read_sql(query_sql, conn)
+
+# BigQuery Connection (Auto-login)
+client = bigquery.Client(project='YOUR_PROJECT_NAME')
+query_bq = "SELECT * FROM query2"
+df_bq = client.query(query_bq).to_dataframe()
+
+# Fill NaN values (spaces) with zero
+df_sql.fillna(0, inplace=True)
+df_bq.fillna(0, inplace=True)
+
+# Print column names
+print("Columns in SQL DataFrame:", df_sql.columns.tolist())
+print("Columns in BigQuery DataFrame:", df_bq.columns.tolist())
+
+# Find common columns for comparison
+common_columns = list(set(df_sql.columns) & set(df_bq.columns))
+print("Common Columns for Comparison:", common_columns)
+
+# Compare DataFrames on common columns
+comparison_result = df_sql[common_columns].equals(df_bq[common_columns])
+print("Are DataFrames identical on common columns?", comparison_result)
+
+# If you want a detailed comparison
+mismatch = df_sql[common_columns].compare(df_bq[common_columns])
+print("Mismatched Records:")
+print(mismatch)
