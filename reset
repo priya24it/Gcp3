@@ -1,0 +1,8 @@
+# Ensure index alignment before comparison
+df_sql_reset = df_sql[common_columns].reset_index(drop=True)
+df_bq_reset = df_bq[common_columns].reset_index(drop=True)
+
+# Perform detailed comparison
+mismatch = df_sql_reset.compare(df_bq_reset)
+print("Mismatched Records:")
+print(mismatch)
