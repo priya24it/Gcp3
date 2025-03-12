@@ -1,0 +1,41 @@
+import pyodbc
+import pandas as pd
+
+# SQL Server Connection - Windows Authentication
+server = 'YOUR_SERVER_NAME'
+database = 'YOUR_DATABASE_NAME'
+conn = pyodbc.connect(
+    'DRIVER={SQL Server};'
+    f'SERVER={server};'
+    f'DATABASE={database};'
+    'Trusted_Connection=yes;'
+)
+
+# Fetch data from SQL Server
+query = "SELECT * FROM recordtypes"
+df_sql = pd.read_sql(query, conn)
+
+# Load data from text file (assuming CSV format)
+file_path = 'path_to_your_file.txt'  # Update the correct file path
+df_txt = pd.read_csv(file_path, delimiter=',')  # Adjust delimiter as needed
+
+# Fill NaN values (spaces) with zero
+df_sql.fillna(0, inplace=True)
+df_txt.fillna(0, inplace=True)
+
+# Print column names
+print("Columns in SQL DataFrame:", df_sql.columns.tolist())
+print("Columns in Text File DataFrame:", df_txt.columns.tolist())
+
+# Find common columns for comparison
+common_columns = list(set(df_sql.columns) & set(df_txt.columns))
+print("Common Columns for Comparison:", common_columns)
+
+# Compare DataFrames on common columns
+comparison_result = df_sql[common_columns].equals(df_txt[common_columns])
+print("Are DataFrames identical on common columns?", comparison_result)
+
+# If you want a detailed comparison
+mismatch = df_sql[common_columns].compare(df_txt[common_columns])
+print("Mismatched Records:")
+print(mismatch)
