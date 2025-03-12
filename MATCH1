@@ -1,0 +1,13 @@
+# Ensure index alignment before comparison
+df_sql_reset = df_sql[common_columns].reset_index(drop=True)
+df_bq_reset = df_bq[common_columns].reset_index(drop=True)
+
+# Compare column by column
+for col in common_columns:
+    mismatches = df_sql_reset[col] != df_bq_reset[col]
+    if mismatches.any():
+        print(f"Column '{col}' has mismatched values:")
+        print(pd.DataFrame({'SQL_Value': df_sql_reset[col][mismatches], 
+                            'BQ_Value': df_bq_reset[col][mismatches]}))
+    else:
+        print(f"Column '{col}' matches perfectly.")
