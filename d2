@@ -1,0 +1,21 @@
+from datetime import datetime
+
+def convert_date(date_str):
+    """
+    Convert a date from MMDDYY format to YYYY-MM-DD format.
+    :param date_str: str, date in MMDDYY format
+    :return: str, date in YYYY-MM-DD format
+    """
+    try:
+        # Parse the input date assuming MMDDYY format
+        date_obj = datetime.strptime(date_str, "%m%d%y")
+        # Convert it to YYYY-MM-DD format
+        formatted_date = date_obj.strftime("%Y-%m-%d")
+        return formatted_date
+    except ValueError:
+        return "Invalid date format. Please enter a 6-digit MMDDYY date."
+
+# Example usage
+date_input = "012325"
+converted_date = convert_date(date_input)
+print("Converted Date:", converted_date)
