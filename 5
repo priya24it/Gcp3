@@ -1,0 +1,37 @@
+# Define the unique key column (Change this to the correct column)
+unique_key = "RecordIdSequenceNumber"  # Ensure this column exists in both DataFrames
+
+# Ensure the unique key exists in both DataFrames
+if unique_key not in df_sql_reset.columns or unique_key not in df_bq_reset.columns:
+    raise KeyError(f"Unique key '{unique_key}' is missing in one of the DataFrames")
+
+# Set index based on the unique key for proper alignment
+df_sql_reset.set_index(unique_key, inplace=True)
+df_bq_reset.set_index(unique_key, inplace=True)
+
+# Find common unique keys
+common_keys = df_sql_reset.index.intersection(df_bq_reset.index)
+
+# Find keys missing in either DataFrame
+missing_in_sql = df_bq_reset.index.difference(df_sql_reset.index)
+missing_in_bq = df_sql_reset.index.difference(df_bq_reset.index)
+
+if not missing_in_sql.empty:
+    logger.info(f"Keys present in df_bq_reset but missing in df_sql_reset: {missing_in_sql.tolist()}")
+
+if not missing_in_bq.empty:
+    logger.info(f"Keys present in df_sql_reset but missing in df_bq_reset: {missing_in_bq.tolist()}")
+
+# Compare only for common unique keys
+for col in common_columns:
+    mismatches = df_sql_reset.loc[common_keys, col] != df_bq_reset.loc[common_keys, col]
+
+    if mismatches.any():
+        logger.info(f"Column '{col}' has mismatched values based on unique key '{unique_key}':")
+        df_mismatch = pd.DataFrame({
+            'SQL_Value': df_sql_reset.loc[common_keys, col][mismatches],
+            'BQ_Value': df_bq_reset.loc[common_keys, col][mismatches]
+        })
+        logger.info(df_mismatch.to_string())  # Print mismatched values
+    else:
+        logger.info(f"Column '{col}' matches perfectly based on unique key '{unique_key}'.")
