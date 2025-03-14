@@ -1,0 +1,5 @@
+common_columns = df_sql.columns.intersection(df_txt.columns)
+df_txt = df_txt[common_columns]  # Keep only matching columns
+df_sql = df_sql[common_columns]
+
+df_txt = df_txt.astype(df_sql.dtypes.to_dict())  # Now safe to apply
