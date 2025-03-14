@@ -1,0 +1,95 @@
+import pandas as pd
+import numpy as np
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Function to load SQL data (Modify the connection & query as needed)
+def load_sql_data(query, connection):
+    try:
+        df = pd.read_sql(query, connection)
+        if df.empty:
+            logger.warning("SQL DataFrame is empty. Check the query.")
+        return df
+    except Exception as e:
+        logger.error(f"Error loading SQL data: {e}")
+        return None
+
+# Function to load text file data (Modify based on file format)
+def load_text_data(file_path):
+    try:
+        df = pd.read_csv(file_path)  # Adjust to pd.read_json(), pd.read_excel() if needed
+        if df.empty:
+            logger.warning("Text file DataFrame is empty. Check the file.")
+        return df
+    except Exception as e:
+        logger.error(f"Error loading text file data: {e}")
+        return None
+
+# Define the unique key and common columns
+unique_key = "RecordIdSequenceNumber"  # Change this to your actual unique key
+common_columns = ["TransactionCode", "RecordIndicatorValue", "AccountNumber"]  # Adjust based on actual columns
+
+# Load DataFrames (Modify the SQL query & connection)
+sql_query = "SELECT * FROM Landing.Pershing.AcctAMainAccountInfo WHERE businessdate = '2024-03-14'"
+sql_connection = None  # Replace with actual DB connection
+
+df_sql = load_sql_data(sql_query, sql_connection)
+df_txt = load_text_data("data_file.csv")  # Replace with actual file path
+
+# Check if DataFrames are properly loaded
+if df_sql is None or df_txt is None:
+    raise ValueError("One or both DataFrames could not be loaded. Check the data sources.")
+
+# Ensure the unique key exists in both DataFrames
+if unique_key not in df_sql.columns or unique_key not in df_txt.columns:
+    raise KeyError(f"Unique key '{unique_key}' is missing in one of the DataFrames.")
+
+# Convert column types to match
+df_txt = df_txt.astype(df_sql.dtypes.to_dict())
+
+# Replace NaNs with empty strings for comparison
+df_sql.fillna('', inplace=True)
+df_txt.fillna('', inplace=True)
+
+# Sort and reset index for consistency
+df_sql = df_sql.sort_values(by=unique_key).reset_index(drop=True)
+df_txt = df_txt.sort_values(by=unique_key).reset_index(drop=True)
+
+# Set index based on unique key for alignment
+df_sql.set_index(unique_key, inplace=True)
+df_txt.set_index(unique_key, inplace=True)
+
+# Find common keys
+common_keys = df_sql.index.intersection(df_txt.index)
+missing_in_sql = df_txt.index.difference(df_sql.index)
+missing_in_txt = df_sql.index.difference(df_txt.index)
+
+# Log missing unique keys
+if not missing_in_sql.empty:
+    logger.warning(f"Keys in text file but missing in SQL: {missing_in_sql.tolist()}")
+
+if not missing_in_txt.empty:
+    logger.warning(f"Keys in SQL but missing in text file: {missing_in_txt.tolist()}")
+
+# Compare column-wise for common keys
+for col in common_columns:
+    if col not in df_sql.columns or col not in df_txt.columns:
+        logger.warning(f"Column '{col}' missing in one of the DataFrames, skipping.")
+        continue
+
+    mismatches = df_sql.loc[common_keys, col] != df_txt.loc[common_keys, col]
+    
+    if mismatches.any():
+        logger.info(f"Column '{col}' has mismatched values based on unique key '{unique_key}':")
+        df_mismatch = pd.DataFrame({
+            'SQL_Value': df_sql.loc[common_keys, col][mismatches],
+            'TXT_Value': df_txt.loc[common_keys, col][mismatches]
+        })
+        logger.info(df_mismatch.to_string())  # Print mismatches
+    else:
+        logger.info(f"Column '{col}' matches perfectly based on unique key '{unique_key}'.")
+
+logger.info("Comparison complete.")
