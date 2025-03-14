@@ -1,0 +1,27 @@
+# Load SQL data
+sql_query = "SELECT * FROM Landing.Pershing.AcctAMainAccountInfo WHERE businessdate = '2024-03-14'"
+sql_connection = None  # Replace with actual DB connection
+
+try:
+    df_sql = pd.read_sql(sql_query, sql_connection)
+    if df_sql.empty:
+        logger.warning("SQL DataFrame is empty. Check the query and database connection.")
+except Exception as e:
+    logger.error(f"Error loading SQL data: {e}")
+    df_sql = None
+
+# Load text file
+file_path = r"C:\out\AcctAMainAccountInfo_030525_22052313172802.csv"
+
+try:
+    df_txt = pd.read_csv(file_path)
+    if df_txt.empty:
+        logger.warning("Text file DataFrame is empty. Check the file path and content.")
+except Exception as e:
+    logger.error(f"Error loading text file data: {e}")
+    df_txt = None
+
+# **ADD THIS CHECK IMMEDIATELY AFTER LOADING DATA**
+if df_sql is None or df_txt is None or df_sql.empty or df_txt.empty:
+    logger.error("One or both DataFrames are empty. Cannot proceed with comparison.")
+    exit()  # **STOP SCRIPT EXECUTION IF A DATAFRAME IS EMPTY**
