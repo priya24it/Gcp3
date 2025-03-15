@@ -1,0 +1,58 @@
+import pandas as pd
+import numpy as np
+
+# SQL to BigQuery Data Type Mapping
+sql_to_bq_types = {
+    'int': 'INT64',
+    'smallint': 'INT64',
+    'bigint': 'INT64',
+    'tinyint': 'INT64',
+    'bit': 'BOOL',
+    'decimal': 'NUMERIC',
+    'numeric': 'NUMERIC',
+    'float': 'FLOAT64',
+    'real': 'FLOAT64',
+    'money': 'FLOAT64',
+    'smallmoney': 'FLOAT64',
+    'char': 'STRING',
+    'varchar': 'STRING',
+    'text': 'STRING',
+    'nchar': 'STRING',
+    'nvarchar': 'STRING',
+    'ntext': 'STRING',
+    'date': 'DATE',
+    'datetime': 'DATETIME',
+    'datetime2': 'DATETIME',
+    'smalldatetime': 'DATETIME',
+    'time': 'TIME',
+    'binary': 'BYTES',
+    'varbinary': 'BYTES'
+}
+
+# Function to convert SQL dtypes to BigQuery dtypes
+def convert_sql_to_bq(df, sql_dtypes):
+    bq_dtypes = {col: sql_to_bq_types.get(sql_dtypes[col].lower(), 'STRING') for col in df.columns}
+    return df.astype(bq_dtypes)
+
+# Example DataFrame with SQL data types
+sql_dtypes = {
+    'id': 'int',
+    'name': 'varchar',
+    'price': 'decimal',
+    'created_at': 'datetime'
+}
+
+# Sample DataFrame
+df_sql = pd.DataFrame({
+    'id': [1, 2, 3],
+    'name': ['A', 'B', 'C'],
+    'price': [10.5, 20.0, 30.75],
+    'created_at': ['2024-03-10 10:00:00', '2024-03-11 11:00:00', '2024-03-12 12:00:00']
+})
+
+# Convert DataFrame to BigQuery Compatible Types
+df_bq = convert_sql_to_bq(df_sql, sql_dtypes)
+
+# Display the converted DataFrame
+import ace_tools as tools
+tools.display_dataframe_to_user(name="BigQuery Converted DataFrame", dataframe=df_bq)
