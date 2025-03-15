@@ -1,0 +1,1 @@
+decimal_fields = datatypes_df[datatypes_df["SqlDataType"].str.contains("decimal", case=False, na=False)]["FieldName"].tolist()
