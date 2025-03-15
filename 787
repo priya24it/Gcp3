@@ -1,0 +1,28 @@
+WITH RecordTypeFilter AS (
+    -- Step 1: Get RecordTypeCriteria dynamically based on input table
+    SELECT DISTINCT RecordTypeCriteria
+    FROM Landing.Pershing.RecordTypes
+    WHERE LandingTable = 'YourTableName'
+),
+ExtractedStartPositions AS (
+    -- Step 2: Extract the first numeric value from RecordTypeCriteria as StartPosition
+    SELECT DISTINCT 
+        CAST(LEFT(RecordTypeCriteria, CHARINDEX('-', RecordTypeCriteria + '-') - 1) AS INT) AS StartPosition
+    FROM RecordTypeFilter
+    WHERE ISNUMERIC(LEFT(RecordTypeCriteria, CHARINDEX('-', RecordTypeCriteria + '-') - 1)) = 1
+),
+CheckColumnExists AS (
+    -- Step 3: Check if the column 'RecordIdSequenceNumber' exists in the Metadata table
+    SELECT 1 AS ColumnExists
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'Metadata' AND COLUMN_NAME = 'RecordIdSequenceNumber'
+)
+-- Step 4: Construct final query dynamically
+SELECT 
+    FieldName, 
+    StartPosition
+    -- Conditionally include RecordIdSequenceNumber if it exists
+    , CASE WHEN EXISTS (SELECT 1 FROM CheckColumnExists) THEN RecordIdSequenceNumber ELSE NULL END AS RecordIdSequenceNumber
+FROM Landing.Pershing.Metadata 
+WHERE StartPosition IN (SELECT StartPosition FROM ExtractedStartPositions)
+   OR StartPosition <= 3;
