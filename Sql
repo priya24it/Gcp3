@@ -1,0 +1,53 @@
+import pandas as pd
+import numpy as np
+
+# SQL to BigQuery Data Type Mapping
+sql_to_bq_types = {
+    'int64': 'INT64',
+    'int': 'INT64',
+    'smallint': 'INT64',
+    'bigint': 'INT64',
+    'tinyint': 'INT64',
+    'bit': 'BOOL',
+    'float64': 'FLOAT64',
+    'decimal': 'NUMERIC',
+    'numeric': 'NUMERIC',
+    'float': 'FLOAT64',
+    'real': 'FLOAT64',
+    'money': 'FLOAT64',
+    'smallmoney': 'FLOAT64',
+    'object': 'STRING',
+    'char': 'STRING',
+    'varchar': 'STRING',
+    'text': 'STRING',
+    'nchar': 'STRING',
+    'nvarchar': 'STRING',
+    'ntext': 'STRING',
+    'date': 'DATE',
+    'datetime': 'DATETIME',
+    'datetime64': 'DATETIME',
+    'datetime2': 'DATETIME',
+    'smalldatetime': 'DATETIME',
+    'time': 'TIME',
+    'binary': 'BYTES',
+    'varbinary': 'BYTES'
+}
+
+# Function to convert SQL dtypes to BigQuery dtypes dynamically
+def convert_sql_to_bq(df):
+    inferred_dtypes = {col: str(df[col].dtype) for col in df.columns}
+    bq_dtypes = {col: sql_to_bq_types.get(inferred_dtypes[col].lower(), 'STRING') for col in df.columns}
+    return df.astype(bq_dtypes)
+
+# Load data from uploaded file
+file_path = "/mnt/data/file-Pb1nQzvqZD2TUh9fZQ17QH"
+
+# Read data into a DataFrame (assuming CSV format, adjust if necessary)
+df_sql = pd.read_csv(file_path)
+
+# Convert DataFrame to BigQuery Compatible Types
+df_bq = convert_sql_to_bq(df_sql)
+
+# Display the converted DataFrame
+import ace_tools as tools
+tools.display_dataframe_to_user(name="BigQuery Converted DataFrame", dataframe=df_bq)
