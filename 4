@@ -1,0 +1,5 @@
+# Ensure df_bq exists (assuming it’s already loaded from your SQL query)
+# Convert integer fields safely
+for intfield in int_fields:
+    if intfield in df_bq.columns:
+        df_bq[intfield] = pd.to_numeric(df_bq[intfield], errors='coerce').fillna(0).astype(int)
