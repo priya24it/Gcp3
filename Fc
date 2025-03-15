@@ -1,0 +1,104 @@
+import pandas as pd
+import pyodbc
+import os
+import glob
+
+# Database connection setup (Replace with actual details)
+try:
+    conn = pyodbc.connect(
+        "DRIVER={SQL Server};"
+        "SERVER=your_server;"
+        "DATABASE=your_database;"
+        "UID=your_username;"
+        "PWD=your_password"
+    )
+    print("Database connection successful.")
+except Exception as e:
+    print(f"Database connection failed: {str(e)}")
+    exit()
+
+# Folder containing CSV files
+csv_folder = "path_to_csv_folder"  # Replace with actual folder path
+
+# Get all CSV files in the folder
+csv_files = glob.glob(os.path.join(csv_folder, "*.csv"))
+
+# List to store mismatch results
+all_mismatches = []
+
+# Process each CSV file
+for csv_file in csv_files:
+    try:
+        # Extract table name from file name
+        table_name = os.path.basename(csv_file).replace(".csv", "")
+
+        print(f"\nProcessing file: {csv_file} (Table: {table_name})")
+
+        # Fetch unique keys dynamically
+        query_unique_keys = f"""
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+        WHERE TABLE_NAME = '{table_name}'
+        """
+        unique_keys_df = pd.read_sql(query_unique_keys, conn)
+        unique_keys = unique_keys_df["COLUMN_NAME"].tolist()
+
+        if not unique_keys:
+            raise ValueError(f"No unique keys found for table {table_name}")
+
+        # Load CSV Data
+        dfcsv = pd.read_csv(csv_file)
+
+        # Fetch SQL Data
+        query_data = f"SELECT * FROM {table_name}"
+        dfsql = pd.read_sql(query_data, conn)
+
+        # Identify common columns (excluding unique keys)
+        common_columns = list(set(dfcsv.columns) & set(dfsql.columns) - set(unique_keys))
+
+        # Perform inner join on unique key columns
+        merged_df = pd.merge(dfcsv, dfsql, on=unique_keys, how="inner", suffixes=("_csv", "_sql"))
+
+        # Handle null values by replacing them with an empty string for comparison
+        merged_df.fillna("", inplace=True)
+
+        # Convert data types to string for comparison
+        for col in common_columns:
+            merged_df[f"{col}_csv"] = merged_df[f"{col}_csv"].astype(str)
+            merged_df[f"{col}_sql"] = merged_df[f"{col}_sql"].astype(str)
+
+        # Identify mismatches
+        mismatches = []
+        for col in common_columns:
+            mask = merged_df[f"{col}_csv"] != merged_df[f"{col}_sql"]
+            mismatch_rows = merged_df.loc[mask, unique_keys].copy()
+            mismatch_rows["table_name"] = table_name
+            mismatch_rows["column_name"] = col
+            mismatch_rows["csv_value"] = merged_df.loc[mask, f"{col}_csv"]
+            mismatch_rows["sql_value"] = merged_df.loc[mask, f"{col}_sql"]
+            mismatches.append(mismatch_rows)
+
+        # Store mismatches
+        if mismatches:
+            mismatch_df = pd.concat(mismatches).head(5)
+            all_mismatches.append(mismatch_df)
+            print(f"Mismatches found in {table_name}")
+
+    except Exception as e:
+        print(f"Error processing {csv_file}: {str(e)}")
+
+# Display mismatches
+if all_mismatches:
+    final_mismatch_df = pd.concat(all_mismatches)
+    import ace_tools as tools
+    tools.display_dataframe_to_user(name="Top Mismatched Records", dataframe=final_mismatch_df)
+else:
+    print("No mismatches found in any file.")
+
+# Close database connection in the finally block
+finally:
+    try:
+        conn.close()
+        print("Database connection closed.")
+    except Exception as e:
+        print(f"Error closing the connection: {str(e)}")
