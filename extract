@@ -1,0 +1,7 @@
+ExtractedStartPositions AS (
+    -- Step 3: Extract the first numeric value from each RecordTypeCriteria
+    SELECT DISTINCT 
+        CAST(LEFT(RecordTypeCriteria, CHARINDEX('-', RecordTypeCriteria + '-') - 1) AS INT) AS StartPosition
+    FROM SplitRecordType
+    WHERE ISNUMERIC(LEFT(RecordTypeCriteria, CHARINDEX('-', RecordTypeCriteria + '-') - 1)) = 1
+)
