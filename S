@@ -1,0 +1,1 @@
+I hope you’re doing well. I’ve noticed that the process.log file is growing significantly in size (sometimes reaching 2GB–3GB) when running 20 files at a time in our current setup, which runs on top of Podman. The log file continuously updates with different long messages, and I wanted to check if appending data at this rate could cause any performance or stability issues.
